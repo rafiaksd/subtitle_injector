@@ -99,26 +99,37 @@ def get_video_duration(video_path):
 
     return float(result.stdout.strip())
 
-def overlay_and_concatenate(video_path, bg_path, crop_x, crop_y, crop_w, crop_h, ending_video_path, logo_path, output_path):
+def overlay_and_concatenate(video_path, bg_path, crop_x, crop_y, crop_w, crop_h, ending_video_path, logo_path, output_path, ass_path):
     video_duration = get_video_duration(video_path)
+    top_text = "Sheikh Shithri"
+    subtitle_below_top = "حفظه الله"
+    bottom_text = "Rectfify Matters"
 
     filter_complex = (
-        # Crop and scale main video
+        # Draw multiple text layers on background first
+        f"[1:v]scale={hor_res}:{ver_res},setsar=1,"
+        f"drawtext=text='{top_text}':fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(1100-text_w)/2:y=20,"
+        f"drawtext=text='{subtitle_below_top}':fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(1100-text_w)/2:y=100,"
+        f"drawtext=text='{bottom_text}':fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=white:fontsize=60:x=(1100-text_w)/2:y=h-text_h-40,"
+        f"subtitles='{ass_path}'[bg_with_text];"
+
+        # Crop and scale original video
         f"[0:v]crop={crop_w}:{crop_h}:{crop_x}:{crop_y},scale={cropped_vid_horizontal_width}:{ver_res},setsar=1[cropped];"
-        # Scale background
-        f"[1:v]scale={hor_res}:{ver_res},setsar=1[bg];"
-        # Overlay cropped video on background
-        f"[bg][cropped]overlay={hor_res - cropped_vid_horizontal_width}:0[overlaid];"
-        #scale logo
+
+        # Overlay cropped video onto text-enhanced background
+        f"[bg_with_text][cropped]overlay={hor_res - cropped_vid_horizontal_width}:0[overlaid];"
+
+        # Scale logo
         f"[3:v]scale=180:180[logo_scaled];"
-        # Overlay logo on top right of previous overlay
+
+        # Overlay logo at top-right
         f"[overlaid][logo_scaled]overlay=x=main_w-w-30:y=30[with_logo];"
-        # Reset timestamps for overlay + audio streams
+
+        # Continue as before
         f"[with_logo]setpts=PTS-STARTPTS[v0];"
         f"[0:a]asetpts=PTS-STARTPTS[a0];"
         f"[2:v]setpts=PTS-STARTPTS,scale={hor_res}:{ver_res},setsar=1[v1];"
         f"[2:a]asetpts=PTS-STARTPTS[a1];"
-        # Concatenate video+audio streams
         f"[v0][a0][v1][a1]concat=n=2:v=1:a=1[outv][outa]"
     )
 
@@ -139,5 +150,5 @@ def overlay_and_concatenate(video_path, bg_path, crop_x, crop_y, crop_w, crop_h,
     subprocess.run(cmd, check=True)
     print(f"Output saved to {output_path}")
 
-overlay_and_concatenate(my_video_path, "bg.png", crop_x, crop_y, crop_w, crop_h, "ending.mp4" , "logo.png" , "testing_vert_burn_onego.mp4")
+overlay_and_concatenate(my_video_path, "bg.png", crop_x, crop_y, crop_w, crop_h, "ending.mp4" , "logo.png" , "testing_vert_burn_onego.mp4", "test_sub.ass")
 winsound.Beep(1000,500)
