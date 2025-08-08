@@ -430,7 +430,7 @@ def get_caption_text():
         else:
             print("❌ Invalid input. Please enter 0 or 1.")
 
-winsound.PlaySound("waitaminute.wav", winsound.SND_FILENAME)
+winsound.PlaySound("waitaminute.wav", winsound.SND_FILENAME) # audio to alert waiting input from user
 winsound.PlaySound("waitaminute.wav", winsound.SND_FILENAME)
 title_text = sanitize_for_ffmpeg(input("Enter Sheikh Name: "))
 caption_text = get_caption_text()
