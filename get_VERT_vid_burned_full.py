@@ -135,6 +135,8 @@ def get_video_from_youtube():
             os.rename(base_video_path, final_output)
 
         print(f"✅ Final downloaded video saved at:\n{final_output}")
+        winsound.PlaySound("downloaddone.wav", winsound.SND_FILENAME)
+
         final_output = os.path.abspath(final_output)
 
         # === Ask if trim is needed
