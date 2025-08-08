@@ -1,0 +1,13 @@
+*.wav
+*.mp3
+*.txt
+*.srt
+*.ass
+*.mp4
+*.png
+/subs/
+/full_videos/
+/fixedsubs/
+/clips/
+/burned_videos/
+/test fade/
