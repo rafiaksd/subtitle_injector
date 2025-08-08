@@ -6,7 +6,7 @@ import re
 from pytubefix import YouTube
 
 """
-You are an expert in natural language processing and Arabic linguistics.
+You are an expert in Arabic
 
 I will give you Arabic subtitle data that is timestamped at the word level, where each subtitle block contains only a single Arabic word with its own start and end time.
 
@@ -30,6 +30,7 @@ After completing the Arabic sentence grouping, translate every single subtitle i
 In the English translation:
 - Replace the word “God” with “Allah”.
 - Replace any instance of “peace be upon him” (referring to the Prophet) with “ﷺ”.
+- Replace May Allah be Pleased with him with رضي الله عنه
 
 The final result MUST be formatted in standard .srt subtitle format and only have the TRANSLATED ENGLISH PART.
 
@@ -349,7 +350,6 @@ rect_defined = False
 
 to_burn_video_file = video_path
 
-# Main logic
 def select_crop_area(video_path):
     # Mouse callback to draw rectangle
     def draw_rectangle(event, x, y, flags, param):
@@ -433,12 +433,12 @@ def get_caption_text():
             print("❌ Invalid input. Please enter 0 or 1.")
 
 winsound.PlaySound("waitaminute.wav", winsound.SND_FILENAME) # audio to alert waiting input from user
-winsound.PlaySound("waitaminute.wav", winsound.SND_FILENAME)
 title_text = sanitize_for_ffmpeg(input("Enter Sheikh Name: "))
 caption_text = get_caption_text()
 bottom_text_my = sanitize_for_ffmpeg(input("Enter Video Title: "))
 
-print(f"👀 👀 SELECT CROP AREA 🧐 🧐 🛤️🛤️ ")
+print(f"👀 👀 SELECT CROP AREA 🧐 🧐 🛤️🛤️, A/D to move, press C when done...")
+winsound.PlaySound("waitaminute.wav", winsound.SND_FILENAME)
 crop_x, crop_y, crop_w, crop_h = select_crop_area(to_burn_video_file)
 
 hor_res = 1920
