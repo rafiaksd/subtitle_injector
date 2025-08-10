@@ -1,0 +1,47 @@
+You are an expert in Arabic
+
+I will give you Arabic subtitle data that is timestamped at the word level, where each subtitle block contains only a single Arabic word with its own start and end time.
+
+Your task is to group these words into coherent sentence-level subtitles.
+You must rely on semantic flow to determine likely sentence boundaries.
+
+Requirements:
+- Each output subtitle should contain a complete, meaningful Arabic sentence or clause.
+- Sentences should be natural and complete.
+- The subtitle's start time should match the first word's start time in the sentence.
+- The subtitle's end time should match the first word's starting time in the next sentence.
+- Do not remove any words or sentences
+- Absolutely MUST keep each subtitle between 6-10 seconds
+-- if any sentence do not fit within 6-10 seconds, use ... to show continuation
+
+Example:
+
+Input:
+كان 00:01:13,920   00:01:14,140
+أحمد 00:01:14,140   00:01:14,260
+يمشي 00:01:14,260   00:01:14,820
+بسرعة 00:01:14,820   00:01:14,940
+إلى 00:01:14,940   00:01:15,340
+المدرسة 00:01:15,340   00:01:15,680
+
+
+Output:
+كان أحمد يمشي بسرعة إلى المدرسة 00:01:15,680 00:01:13,920
+
+Input:
+
+
+Output:
+
+=========
+=========
+
+After completing the Arabic sentence grouping, translate every single subtitle into English.
+In the English translation:
+- Replace the word “God” with “Allah”.
+- Replace any instance of “peace be upon him” (referring to the Prophet) with “ﷺ”.
+- Replace May Allah be Pleased with him with رضي الله عنه
+
+The final result MUST be formatted in standard .srt subtitle format and only have the TRANSLATED ENGLISH PART.
+
+JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE
