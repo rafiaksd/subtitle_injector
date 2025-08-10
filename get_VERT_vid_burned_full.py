@@ -340,12 +340,7 @@ if not os.path.exists(fixed_srt_path):
 ### VIDEO BURNING TOOL V2 #####
 ###############################
 
-import os, subprocess, re, cv2, winsound, time
-
-# Global for crop
-drawing = False
-ix, iy, ex, ey = -1, -1, -1, -1
-rect_defined = False
+import os, subprocess, re, winsound, time
 
 def sanitize_for_ffmpeg(text: str):
     return text.replace(":", "").replace("'", "").replace('"', "").replace("’", "")
@@ -368,13 +363,13 @@ def get_video_duration(video_path):
         "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1",
         video_path
-    ], capture_output=True, text=True)
+    ], capture_output=True, text=True )
     return float(result.stdout.strip())
 
 def convert_srt_to_ass(srt_path: str, ass_path: str):
     subprocess.run([
         'ffmpeg', '-i', srt_path, ass_path, '-y'
-    ], check=True, capture_output=True, text=True)
+    ], check=True, capture_output=True, text=True, encoding='utf-8')
     print("✅ Converted .srt to .ass file")
 
 def modify_ass_to_center(ass_path: str):
@@ -431,6 +426,29 @@ def add_fade_animation_to_ass(file_path, fade_out_ms=100):
 ### CROP SELECTION FROM VIDEO ######
 ####################################
 
+import cv2
+import win32gui
+import win32con
+import pyautogui
+
+# Globals for crop selection
+drawing = False
+ix, iy, ex, ey = -1, -1, -1, -1
+rect_defined = False
+
+def bring_window_to_front(window_title):
+    hwnd = win32gui.FindWindow(None, window_title)
+    if hwnd:
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        rect = win32gui.GetWindowRect(hwnd)
+        x = rect[0] + 10
+        y = rect[1] + 10
+        pyautogui.click(x, y)  # Simulate click inside the window
+        time.sleep(0.2)
+        win32gui.SetForegroundWindow(hwnd)
+    else:
+        print(f"Window '{window_title}' not found.")
+
 def select_crop_area(video_path):
     def draw_rectangle(event, x, y, flags, param):
         global ix, iy, ex, ey, drawing, rect_defined
@@ -456,6 +474,7 @@ def select_crop_area(video_path):
         return
 
     cv2.namedWindow("Video Crop Selector")
+    bring_window_to_front("Video Crop Selector")
     cv2.setMouseCallback("Video Crop Selector", draw_rectangle)
 
     while True:
@@ -484,9 +503,11 @@ def select_crop_area(video_path):
     cap.release()
     cv2.destroyAllWindows()
 
-####################################
-### DIRECT OVERLAY + BURN + CONCAT #
-####################################
+######################################
+### DIRECT OVERLAY + BURN + CONCAT ###
+######################################
+
+overlay_concat_start_time = time.time()
 
 def overlay_and_concatenate(video_path, bg_path, crop_x, crop_y, crop_w, crop_h, ending_video_path, logo_path, output_path, ass_path, top_text, subtitle_below_top, bottom_text):
     video_duration = get_video_duration(video_path)
@@ -536,10 +557,9 @@ def overlay_and_concatenate(video_path, bg_path, crop_x, crop_y, crop_w, crop_h,
         output_path
     ]
 
-    print("Running ffmpeg with combined overlay + concat + logo...")
-    subprocess.run(cmd, check=True)
+    print("♨️♨️ Running ffmpeg with combined overlay + concat + logo...")
+    subprocess.run(cmd, check=True, encoding='utf-8') #capture_output=True, text=True, 
     print(f"Output saved to {output_path}")
-
 
 #####################
 ### MAIN WORKFLOW ###
@@ -580,6 +600,8 @@ overlay_and_concatenate(
     ending_video, logo_path, final_output, ass_file,
     title_text, caption_text, bottom_text
 )
+
+get_time_lapsed(overlay_concat_start_time, "♨️🔥🔥 ")
 
 # Final actions
 os.startfile(final_output)
