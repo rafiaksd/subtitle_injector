@@ -14,7 +14,7 @@ model_size = "turbo"
 # Load Whisper model (e.g., "large-v3" or "turbo")
 model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
-input_file = "clips/short_a_audio.mp4"
+input_file = "clips/think_good_short.mp4"
 input_file_name = input_file.split(".")[0]
 
 print("Started WORD LEVEL Transcribing...")
