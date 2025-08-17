@@ -12,7 +12,8 @@ Requirements:
 - The subtitle's end time should match the first word's starting time in the next sentence.
 - Do not remove any words or sentences
 - Absolutely MUST keep each subtitle between 6-10 seconds
--- if any sentence do not fit within 6-10 seconds, use ... to show continuation
+- MUST KEEP the subtitles between 6-10 seconds
+-- if any sentence do not fit within 6-10 seconds split it, and use ... to show continuation
 
 Example:
 
@@ -24,9 +25,10 @@ Input:
 إلى 00:01:14,940   00:01:15,340
 المدرسة 00:01:15,340   00:01:15,680
 
-
 Output:
 كان أحمد يمشي بسرعة إلى المدرسة 00:01:15,680 00:01:13,920
+
+Example END
 
 Input:
 
