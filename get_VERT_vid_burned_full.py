@@ -259,7 +259,7 @@ import os, time, winsound
 import srt
 import datetime
 
-model_size = "turbo"
+model_size = "large-v3-turbo"
 
 # Load Whisper model (e.g., "large-v3" or "turbo")
 model = WhisperModel(model_size, device="cpu", compute_type="int8")

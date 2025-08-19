@@ -9,12 +9,12 @@ def get_time_lapsed(start_time, emojis="⏰⏱️"):
     print(f"{emojis}   Time elapsed: {time_elapse:.2f} seconds\n")
     return round(time_elapse, 2)
 
-model_size = "turbo"
+model_size = "tiny"
 
 # Load Whisper model (e.g., "large-v3" or "turbo")
 model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
-input_file = "clips/think_good_short.mp4"
+input_file = "full_videos/22 book summaries.mp4"
 input_file_name = input_file.split(".")[0]
 
 print("Started WORD LEVEL Transcribing...")

@@ -91,6 +91,7 @@ def get_video_from_youtube():
 
         # === Ask if trim is needed
         trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
+        winsound.Beep(1000,500)
         if trim == "yes":
             start = input("⏱️ Start time (e.g. 00:00:05): ").strip()
             end = input("⏱️ End time (e.g. 00:01:00): ").strip()
@@ -208,10 +209,7 @@ import os, time, winsound
 import srt
 import datetime
 
-model_size = "turbo"
-
-# Load Whisper model (e.g., "large-v3" or "turbo")
-model = WhisperModel(model_size, device="cpu", compute_type="int8")
+model = WhisperModel(model_size_or_path="large-v3-turbo", device="cpu", compute_type="int8")
 
 input_file = video_path
 input_file_name = input_file.split(".")[0]
@@ -294,7 +292,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
 
     # Step 3: Sentence segmentation
     sat = SaT("sat-12l-sm", language="ar", style_or_domain="general")
-    sentences = sat.split(full_text, threshold=threshold)
+    sentences = sat.split(full_text, threshold=THRESHOLD)
 
     sentence_subs = []
     for sentence in sentences:
@@ -355,6 +353,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
     new_srt.save(output_srt_path, encoding="utf-8")
     print(f"✅ Saved sentence-level SRT to: {output_srt_path}")
     get_time_lapsed(semantic_sub_start_time, "🆎 🆎")
+    winsound.Beep(1000,500)
 
 print("Started SENTENCE SUBBING...")
 semantic_ar_sub_file = "fixedsubs_ar/" + base_filename + "_sentenced.srt"
