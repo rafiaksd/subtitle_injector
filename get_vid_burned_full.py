@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 import re
 from pytubefix import YouTube
+import winsound
 
 very_beginning = time.time()
 
@@ -89,9 +90,8 @@ def get_video_from_youtube():
         print(f"✅ Final downloaded video saved at:\n{final_output}")
         final_output = os.path.abspath(final_output)
 
-        # === Ask if trim is needed
-        trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
         winsound.Beep(1000,500)
+        trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
         if trim == "yes":
             start = input("⏱️ Start time (e.g. 00:00:05): ").strip()
             end = input("⏱️ End time (e.g. 00:01:00): ").strip()
@@ -273,8 +273,8 @@ original_srt_path = output_sub_file
 import pysrt
 from wtpsplit import SaT
 
-MAX_DURATION_SECONDS = 8.0
-THRESHOLD = 0.15
+MAX_DURATION_SECONDS = 10.0
+THRESHOLD = 0.25
 
 def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=THRESHOLD):
     # Step 1: Load word-level SRT
@@ -292,7 +292,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
 
     # Step 3: Sentence segmentation
     sat = SaT("sat-12l-sm", language="ar", style_or_domain="general")
-    sentences = sat.split(full_text, threshold=THRESHOLD)
+    sentences = sat.split(full_text, threshold=threshold)
 
     sentence_subs = []
     for sentence in sentences:
