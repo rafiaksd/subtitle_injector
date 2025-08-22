@@ -1,19 +1,18 @@
-import subprocess
-import os, time
+import os, re, time, subprocess, winsound, shutil
+from pytubefix import YouTube
 import tkinter as tk
 from tkinter import filedialog
-import re
-from pytubefix import YouTube
-import winsound
+#!pip install pytubefix srt faster_whisper wtpsplit pysrt
 
-very_beginning = time.time()
+##################################
+### DOWNLOAD / LOAD VIDEO
+##################################
 
 # Folder setup
 FULL_DIR = os.path.abspath("full_videos")
 CLIP_DIR = os.path.abspath("clips")
 os.makedirs(FULL_DIR, exist_ok=True)
 os.makedirs(CLIP_DIR, exist_ok=True)
-
 
 def get_time_lapsed(start_time, emojis="⏰⏱️"):
     now_time = time.time()
@@ -129,8 +128,6 @@ def get_video_from_youtube():
         print(f"❌ Error: {e}")
         return None
 
-
-
 def get_video_from_local():
     root = tk.Tk()
     root.withdraw()
@@ -181,7 +178,6 @@ def get_video_from_local():
     print(f"\n✅ LOCAL VIDEO FILE READY:\n{abs_path}")
     return abs_path
 
-
 print("Choose source:")
 print("1. YouTube")
 print("2. Local file")
@@ -197,6 +193,32 @@ else:
      exit()
 
 print(f"\n✅ Final usable video path: {video_path}")
+winsound.Beep(1000,500)
+
+def get_caption_text():
+    while True:
+        choice = input("Enter 0 for HafidhahuAllah, 1 for RahimahuAllah: ").strip()
+        if choice == "0":
+            return "حفظه الله"
+        elif choice == "1":
+            return "رحمه الله"
+        else:
+            print("❌ Invalid input. Please enter 0 or 1.")
+
+title_text = input("Enter Scholar Name: ")
+caption_text = get_caption_text()
+bottom_text_my = input("Enter bottom title: ")
+
+##################################
+### DOWNLOAD LLM MODELS
+##################################
+
+from faster_whisper import WhisperModel
+model = WhisperModel(model_size_or_path="large-v3-turbo", device="cpu", compute_type="int8")
+
+import pysrt
+from wtpsplit import SaT
+sat = SaT("sat-12l-sm", language="ar", style_or_domain="general")
 
 ##################################
 ### GENERATE WORD LEVEL SUBTITLES
@@ -373,71 +395,8 @@ if not os.path.exists(fixed_srt_path):
     exit(1)
 
 ##################################
-### NOW BURNING SUB TO VIDEO
+### NOW BURNING TEXT TO VIDEO
 ##################################
-
-def convert_srt_to_ass(srt_path: str, ass_path: str):
-    subprocess.run([
-        'ffmpeg',
-        '-i', srt_path,
-        ass_path, '-y'
-    ], check=True, capture_output=True, text=True, encoding='utf-8')
-
-    print("✅ Converted .srt to .ass file")
-
-def modify_ass_to_center(ass_path: str):
-    print(f"Now modifying to center, for subtitle.ass file")
-    with open(ass_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-
-    modified_lines = []
-    style_section_found = False
-
-    for line in lines:
-        if line.strip().startswith("[V4+ Styles]"):
-            style_section_found = True
-        elif style_section_found and line.startswith("Style:"):
-            parts = line.strip().split(',')
-            parts[1] = 'Calibri Bold'
-            parts[2] = '24'
-            parts[7] = '1' #bold:1, default:-1
-            parts[16] = '0' # outline thickness
-            parts[18] = '5'  # Alignment field
-            parts[19] = parts[20] = '70' # MarginL, MarginR
-            line = ','.join(parts) + '\n'
-            style_section_found = False
-
-        modified_lines.append(line)
-
-    with open(ass_path, 'w', encoding='utf-8') as f:
-        f.writelines(modified_lines)
-    print("✅ Centering SUBTITLE subtitle.ass DONE")
-
-def add_fade_animation_to_ass(file_path, fade_out_ms=100):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-
-    new_lines = []
-    for line in lines:
-        if line.startswith("Dialogue:"):
-            # Extract the style override block (starts with { ... })
-            match = re.match(r"(Dialogue:[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,)(\{.*?\})?(.*)", line)
-            if match:
-                prefix, tag_block, text = match.groups()
-                tag_block = tag_block or ""
-                if "\\fad" not in tag_block and "\\fade" not in tag_block:
-                    # Add fade-out if not already present
-                    tag_block = tag_block.rstrip("}") + f"\\fad(0,{fade_out_ms})" + "}" if tag_block else f"{{\\fad(0,{fade_out_ms})}}"
-                new_line = prefix + tag_block + text
-                new_lines.append(new_line + "\n")
-            else:
-                new_lines.append(line)
-        else:
-            new_lines.append(line)
-
-     #override the same subtitle .ass file
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.writelines(new_lines)
 
 def get_video_duration(video_path):
     result = subprocess.run([
@@ -450,8 +409,7 @@ def get_video_duration(video_path):
     ], capture_output=True, text=True )
     return float(result.stdout.strip())
 
-
-def burn_subtitles_with_title( bg_image, video_input, ass_path, output_path, top_text, bottom_text, logo_image, subtitle_below_top, ending_video):
+def burn_subtitles_with_title( bg_image, video_input, output_path, top_text, bottom_text, logo_image, subtitle_below_top, ending_video):
     print("🚀 Starting burning subtitles and concatenation...")
 
     # Step 1: Get main video duration
@@ -466,8 +424,8 @@ def burn_subtitles_with_title( bg_image, video_input, ass_path, output_path, top
         f"drawtext=text='{subtitle_below_top}':"
         f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(w-text_w)/2:y=100,"
         f"drawtext=text='{bottom_text}':"
-        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h-text_h-40,"
-        f"subtitles='{ass_path}'[bg_with_text];"
+        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h-text_h-40[bg_with_text];"
+        #f"subtitles='{ass_path}'[bg_with_text];"
 
         # Scale logo
         f"[2:v]scale=180:-1[logo_scaled];"
@@ -505,24 +463,8 @@ def burn_subtitles_with_title( bg_image, video_input, ass_path, output_path, top
     subprocess.run(cmd, check=True)
     print(f"✅ Final video with subtitles and ending created: {output_path}")
 
-def get_caption_text():
-    while True:
-        choice = input("Enter 0 for HafidhahuAllah, 1 for RahimahuAllah: ").strip()
-        if choice == "0":
-            return "حفظه الله"
-        elif choice == "1":
-            return "رحمه الله"
-        else:
-            print("❌ Invalid input. Please enter 0 or 1.")
-
-title_text = input("Enter Scholar Name: ")
-caption_text = get_caption_text()
-bottom_text_my = input("Enter bottom title: ")
-
 video_file = video_path
 base_filename = os.path.splitext(os.path.basename(video_file))[0]
-
-srt_file = fixed_srt_path
 
 #constant INPUT
 bg_image = "bg.png" 
@@ -530,32 +472,45 @@ my_logo = "logo.png"
 ending_video = "ending.mp4"
 final_video_name = bottom_text_my.strip()
 
-#intermediate files
-ass_file = "subtitle.ass"
-
 os.makedirs("burned_videos", exist_ok=True) # Ensure the 'subs/' directory exists
 final_output = os.path.join("burned_videos", f"{final_video_name}.mp4")
 
 started_converstion = time.time()
 
-convert_srt_to_ass(srt_file, ass_file)
-modify_ass_to_center(ass_file)
-add_fade_animation_to_ass(ass_file, fade_out_ms=100)
-burn_subtitles_with_title(bg_image=bg_image, video_input=video_file, ass_path=ass_file, output_path=final_output, top_text=title_text, bottom_text=bottom_text_my, logo_image=my_logo, subtitle_below_top=caption_text, ending_video=ending_video)
+burn_subtitles_with_title(bg_image=bg_image, video_input=video_file, output_path=final_output, top_text=title_text, bottom_text=bottom_text_my, logo_image=my_logo, subtitle_below_top=caption_text, ending_video=ending_video)
 
 get_time_lapsed(started_converstion)
-print("✅ Done: Subtitles burned to center of the video with logo in top-right corner.")
+print("✅ TEXT burned to center of the video with logo in top-right corner.")
 
-# Cleanup (optional)
-os.remove(ass_file)
-print("✅ Cleanup done.")
+#################################
+#### MOVE VIDEO, SUB TO CAPCUT FOLDER
+#################################
 
-#open the burned_videos folder
-os.startfile(final_output) #play the video
-folder_path = os.path.abspath("burned_videos")
-os.startfile(folder_path) #for windows
+def sanitize_folder_name(name: str, replacement: str = "_") -> str:
+    # Define a list of characters that are illegal on most systems
+    illegal_chars = r'[<>:"/\\|?*\x00-\x1F]'
+    sanitized = re.sub(illegal_chars, replacement, name)
+    sanitized = sanitized.rstrip(". ")
+    sanitized = sanitized.lstrip()
 
-print("✅ COMPLETE")
-get_time_lapsed(very_beginning, emojis="🏁🏁🏁")
+    reserved_names = {
+        "CON", "PRN", "AUX", "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+    if sanitized.upper() in reserved_names:
+        sanitized = f"{sanitized}_safe"
 
+    return sanitized
+
+video_to_move = final_output
+subtitle_to_move = fixed_srt_path
+
+destination_dir = os.path.join("capcut", final_video_name)
+
+os.makedirs(destination_dir, exist_ok=True)
+shutil.move(video_to_move, destination_dir) # move the video
+shutil.move(subtitle_to_move, destination_dir) # move the subtitle
+
+os.startfile(destination_dir)
 winsound.PlaySound("success.wav", winsound.SND_FILENAME)
