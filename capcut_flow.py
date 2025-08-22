@@ -1,3 +1,14 @@
+##################
+### check GPU ####
+##################
+
+#import torch
+
+#if not torch.cuda.is_available():
+    #raise EnvironmentError("🚫 GPU runtime not detected! Please enable it: Runtime > Change runtime type > Hardware accelerator: T4 GPU")
+
+#!pip install pytubefix srt faster_whisper wtpsplit pysrt
+
 import os, re, time, subprocess, winsound, shutil
 from pytubefix import YouTube
 import tkinter as tk
@@ -22,6 +33,23 @@ def get_time_lapsed(start_time, emojis="⏰⏱️"):
 
 def sanitize_filename(name):
     return re.sub(r'[\\/*?:"<>|]', "", name)
+
+def sanitize_folder_name(name: str, replacement: str = "_") -> str:
+    # Define a list of characters that are illegal on most systems
+    illegal_chars = r'[<>:"/\\|?*\x00-\x1F]'
+    sanitized = re.sub(illegal_chars, replacement, name)
+    sanitized = sanitized.rstrip(". ")
+    sanitized = sanitized.lstrip()
+
+    reserved_names = {
+        "CON", "PRN", "AUX", "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+    if sanitized.upper() in reserved_names:
+        sanitized = f"{sanitized}_safe"
+
+    return sanitized
 
 # https://www.youtube.com/watch?v=BZP1rYjoBgI the 30 second video 
 def get_video_from_youtube():
@@ -192,7 +220,6 @@ else:
      print("❌ Invalid choice.")
      exit()
 
-print(f"\n✅ Final usable video path: {video_path}")
 winsound.Beep(1000,500)
 
 def get_caption_text():
@@ -209,84 +236,121 @@ title_text = input("Enter Scholar Name: ")
 caption_text = get_caption_text()
 bottom_text_my = input("Enter bottom title: ")
 
+destination_dir = os.path.join("capcut", sanitize_folder_name(bottom_text_my))
+os.makedirs(destination_dir, exist_ok=True)
+
+first_video_filename = os.path.basename(video_path)
+new_video_path = os.path.join(destination_dir, first_video_filename)
+shutil.move(video_path, new_video_path)
+
 ##################################
-### DOWNLOAD LLM MODELS
+### NOW BURNING TEXT TO VIDEO
 ##################################
 
-from faster_whisper import WhisperModel
-model = WhisperModel(model_size_or_path="large-v3-turbo", device="cpu", compute_type="int8")
+def get_video_duration(video_path):
+    result = subprocess.run([
+        "ffprobe",
+        "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        video_path
+    ], capture_output=True, text=True )
+    return float(result.stdout.strip())
+
+def burn_subtitles_with_title( bg_image, video_input, output_path, top_text, bottom_text, logo_image, subtitle_below_top, ending_video):
+    print("🚀 Starting burning subtitles and concatenation...")
+
+    # Step 1: Get main video duration
+    duration = get_video_duration(video_input)
+
+    # Step 2: Build filter_complex
+    drawtext_filter = (
+        # Scale background and add texts
+        f"[0:v]scale=1920:1080,"
+        f"drawtext=text='{top_text}':"
+        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(w-text_w)/2:y=20,"
+        f"drawtext=text='{subtitle_below_top}':"
+        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(w-text_w)/2:y=100,"
+        f"drawtext=text='{bottom_text}':"
+        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h-text_h-40[bg_with_text];"
+        #f"subtitles='{ass_path}'[bg_with_text];"
+
+        # Scale logo
+        f"[2:v]scale=180:-1[logo_scaled];"
+
+        # Overlay logo
+        f"[bg_with_text][logo_scaled]overlay=W-w-20:20[with_logo];"
+
+        # Set timestamps and concat both videos
+        f"[with_logo]setsar=1,setpts=PTS-STARTPTS[v0];"
+        f"[1:a]asetpts=PTS-STARTPTS[a0];"
+        f"[3:v]scale=1920:1080,setsar=1,setpts=PTS-STARTPTS[v1];"
+        f"[3:a]asetpts=PTS-STARTPTS[a1];"
+
+        # Concatenate processed main + ending
+        f"[v0][a0][v1][a1]concat=n=2:v=1:a=1[outv][outa]"
+    )
+
+    # Step 3: Full FFmpeg command with 4 inputs
+    cmd = [
+        "ffmpeg",
+        "-loop", "1", "-t", str(duration), "-i", bg_image,  # [0:v]
+        "-i", video_input,                                 # [1:a]
+        "-i", logo_image,                                  # [2:v]
+        "-i", ending_video,                                # [3:v][3:a]
+        "-filter_complex", drawtext_filter,
+        "-map", "[outv]",
+        "-map", "[outa]",
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        "-pix_fmt", "yuv420p",
+        "-y",
+        output_path
+    ]
+
+    subprocess.run(cmd, check=True)
+    print(f"✅ Final video with subtitles and ending created: {output_path}")
+
+video_file = new_video_path
+base_filename = os.path.splitext(os.path.basename(video_file))[0]
+
+#constant INPUT
+bg_image = "bg.png" 
+my_logo = "logo.png"
+ending_video = "ending.mp4"
+final_video_name = bottom_text_my.strip()
+
+os.makedirs("burned_videos", exist_ok=True) # Ensure the 'subs/' directory exists
+final_output = os.path.join("burned_videos", f"{final_video_name}.mp4")
+
+started_converstion = time.time()
+
+burn_subtitles_with_title(bg_image=bg_image, video_input=video_file, output_path=final_output, top_text=title_text, bottom_text=bottom_text_my, logo_image=my_logo, subtitle_below_top=caption_text, ending_video=ending_video)
+
+get_time_lapsed(started_converstion)
+print("✅ TEXT burned to center of the video with logo in top-right corner.")
+
+video_to_move = final_output
+
+# Get new full path
+video_filename = os.path.basename(video_to_move)
+new_video_path = os.path.join(destination_dir, video_filename)
+
+shutil.move(video_to_move, new_video_path)
+
+print(f"\n✅ Final usable video path: {new_video_path}")
+
+##################################
+### LOADING LLM MODELS
+##################################
+
+#from faster_whisper import WhisperModel
+#model = WhisperModel(model_size_or_path="large-v3-turbo", device="cpu", compute_type="int8")
 
 import pysrt
 from wtpsplit import SaT
 sat = SaT("sat-12l-sm", language="ar", style_or_domain="general")
-
-##################################
-### GENERATE WORD LEVEL SUBTITLES
-##################################
-
-print(f"Continuing to Generate WORD LEVEL Timestamps")
-
-from faster_whisper import WhisperModel
-import os, time, winsound
-import srt
-import datetime
-
-model = WhisperModel(model_size_or_path="large-v3-turbo", device="cpu", compute_type="int8")
-
-input_file = video_path
-input_file_name = input_file.split(".")[0]
-
-print("Started WORD LEVEL Transcribing...")
-word_start = time.time()
-
-segments, info = model.transcribe(
-    input_file, 
-    word_timestamps=True,
-    beam_size=5,
-    vad_filter=True
-)
-
-# Collect words with timestamps
-words_with_timestamps = []
-for segment in segments:
-    for word in segment.words:
-        words_with_timestamps.append(word)
-get_time_lapsed(word_start, "🔤")
-
-# Convert each word into a separate .srt entry
-subtitle_entries = []
-for i, word in enumerate(words_with_timestamps):
-    start = datetime.timedelta(seconds=word.start)
-    end = datetime.timedelta(seconds=word.end)
-    text = word.word.strip()
-    if not text:
-        continue
-    subtitle_entries.append(srt.Subtitle(index=i + 1, start=start, end=end, content=text))
-
-# Ensure the 'subs/' directory exists
-os.makedirs("subs", exist_ok=True)
-
-# Get only the base filename without path
-base_filename = os.path.basename(input_file_name)  # e.g., "The 30-Second Video"
-
-# Remove extension if present
-base_filename = os.path.splitext(base_filename)[0]  # remove .mp4 or any extension
-
-# Build valid output path
-output_sub_file = os.path.join("subs", base_filename + ".srt")
-
-with open(output_sub_file, "w", encoding="utf-8") as f:
-    f.write(srt.compose(subtitle_entries))
-
-print(f"Word-level subtitles saved to {output_sub_file}")
-winsound.Beep(1000, 500)
-
-import shutil
-
-os.makedirs("fixedsubs", exist_ok=True)
-base_filename = os.path.splitext(os.path.basename(video_path))[0]
-
-original_srt_path = output_sub_file
 
 ##################################
 ### Generate Semantic Sentence ###
@@ -297,6 +361,25 @@ from wtpsplit import SaT
 
 MAX_DURATION_SECONDS = 10.0
 THRESHOLD = 0.25
+
+def get_subtitle_from_local():
+    root = tk.Tk()
+    root.withdraw()
+    root.update() #make sure tkinter is ready
+    root.attributes('-topmost', True)  # Force it to be on top
+
+    file_path = filedialog.askopenfilename(
+        title="Select a WORD LEVEL SUBTITLE file",
+        filetypes=[("Video files", "*.srt *.txt"), ("Srt files", "*.*")]
+    )
+
+    if not file_path:
+        print("❌ No file selected.")
+        return None
+
+    abs_path = os.path.abspath(file_path)
+    #base_name = os.path.basename(abs_path)
+    return abs_path
 
 def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=THRESHOLD):
     # Step 1: Load word-level SRT
@@ -377,11 +460,10 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
     get_time_lapsed(semantic_sub_start_time, "🆎 🆎")
     winsound.Beep(1000,500)
 
-print("Started SENTENCE SUBBING...")
-semantic_ar_sub_file = "fixedsubs_ar/" + base_filename + "_sentenced.srt"
-generate_sentence_srt_with_pysrt(input_srt_path=original_srt_path, output_srt_path=semantic_ar_sub_file)
+print("SELECTING SUB to COPY for FIXING...")
+semantic_ar_sub_file = get_subtitle_from_local()
 
-fixed_srt_path = os.path.abspath(os.path.join("fixedsubs", f"{base_filename}_fixed.srt"))
+fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"{bottom_text_my.strip()}_fixed.srt"))
 shutil.copyfile(semantic_ar_sub_file, fixed_srt_path)
 print(f"\n📄 Copied original SRT to: {fixed_srt_path}")
 
@@ -393,124 +475,6 @@ input("\n✅ Done editing? Press ENTER to continue...")
 if not os.path.exists(fixed_srt_path):
     print("❌ Fixed subtitle file not found! Please ensure it's saved and try again.")
     exit(1)
-
-##################################
-### NOW BURNING TEXT TO VIDEO
-##################################
-
-def get_video_duration(video_path):
-    result = subprocess.run([
-        "ffprobe",
-        "-v", "error",
-        "-select_streams", "v:0",
-        "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1",
-        video_path
-    ], capture_output=True, text=True )
-    return float(result.stdout.strip())
-
-def burn_subtitles_with_title( bg_image, video_input, output_path, top_text, bottom_text, logo_image, subtitle_below_top, ending_video):
-    print("🚀 Starting burning subtitles and concatenation...")
-
-    # Step 1: Get main video duration
-    duration = get_video_duration(video_input)
-
-    # Step 2: Build filter_complex
-    drawtext_filter = (
-        # Scale background and add texts
-        f"[0:v]scale=1920:1080,"
-        f"drawtext=text='{top_text}':"
-        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(w-text_w)/2:y=20,"
-        f"drawtext=text='{subtitle_below_top}':"
-        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=yellow:fontsize=72:x=(w-text_w)/2:y=100,"
-        f"drawtext=text='{bottom_text}':"
-        f"fontfile='C\\:/Windows/Fonts/calibrib.ttf':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h-text_h-40[bg_with_text];"
-        #f"subtitles='{ass_path}'[bg_with_text];"
-
-        # Scale logo
-        f"[2:v]scale=180:-1[logo_scaled];"
-
-        # Overlay logo
-        f"[bg_with_text][logo_scaled]overlay=W-w-20:20[with_logo];"
-
-        # Set timestamps and concat both videos
-        f"[with_logo]setsar=1,setpts=PTS-STARTPTS[v0];"
-        f"[1:a]asetpts=PTS-STARTPTS[a0];"
-        f"[3:v]scale=1920:1080,setsar=1,setpts=PTS-STARTPTS[v1];"
-        f"[3:a]asetpts=PTS-STARTPTS[a1];"
-
-        # Concatenate processed main + ending
-        f"[v0][a0][v1][a1]concat=n=2:v=1:a=1[outv][outa]"
-    )
-
-    # Step 3: Full FFmpeg command with 4 inputs
-    cmd = [
-        "ffmpeg",
-        "-loop", "1", "-t", str(duration), "-i", bg_image,  # [0:v]
-        "-i", video_input,                                 # [1:a]
-        "-i", logo_image,                                  # [2:v]
-        "-i", ending_video,                                # [3:v][3:a]
-        "-filter_complex", drawtext_filter,
-        "-map", "[outv]",
-        "-map", "[outa]",
-        "-c:v", "libx264",
-        "-c:a", "aac",
-        "-pix_fmt", "yuv420p",
-        "-y",
-        output_path
-    ]
-
-    subprocess.run(cmd, check=True)
-    print(f"✅ Final video with subtitles and ending created: {output_path}")
-
-video_file = video_path
-base_filename = os.path.splitext(os.path.basename(video_file))[0]
-
-#constant INPUT
-bg_image = "bg.png" 
-my_logo = "logo.png"
-ending_video = "ending.mp4"
-final_video_name = bottom_text_my.strip()
-
-os.makedirs("burned_videos", exist_ok=True) # Ensure the 'subs/' directory exists
-final_output = os.path.join("burned_videos", f"{final_video_name}.mp4")
-
-started_converstion = time.time()
-
-burn_subtitles_with_title(bg_image=bg_image, video_input=video_file, output_path=final_output, top_text=title_text, bottom_text=bottom_text_my, logo_image=my_logo, subtitle_below_top=caption_text, ending_video=ending_video)
-
-get_time_lapsed(started_converstion)
-print("✅ TEXT burned to center of the video with logo in top-right corner.")
-
-#################################
-#### MOVE VIDEO, SUB TO CAPCUT FOLDER
-#################################
-
-def sanitize_folder_name(name: str, replacement: str = "_") -> str:
-    # Define a list of characters that are illegal on most systems
-    illegal_chars = r'[<>:"/\\|?*\x00-\x1F]'
-    sanitized = re.sub(illegal_chars, replacement, name)
-    sanitized = sanitized.rstrip(". ")
-    sanitized = sanitized.lstrip()
-
-    reserved_names = {
-        "CON", "PRN", "AUX", "NUL",
-        *(f"COM{i}" for i in range(1, 10)),
-        *(f"LPT{i}" for i in range(1, 10)),
-    }
-    if sanitized.upper() in reserved_names:
-        sanitized = f"{sanitized}_safe"
-
-    return sanitized
-
-video_to_move = final_output
-subtitle_to_move = fixed_srt_path
-
-destination_dir = os.path.join("capcut", final_video_name)
-
-os.makedirs(destination_dir, exist_ok=True)
-shutil.move(video_to_move, destination_dir) # move the video
-shutil.move(subtitle_to_move, destination_dir) # move the subtitle
 
 os.startfile(destination_dir)
 winsound.PlaySound("success.wav", winsound.SND_FILENAME)
