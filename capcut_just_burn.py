@@ -303,8 +303,10 @@ def burn_subtitles_with_title( bg_image, video_input, output_path, top_text, bot
         "-map", "[outv]",
         "-map", "[outa]",
         "-c:v", "libx264",
+        "-preset", "veryfast",
         "-c:a", "aac",
         "-pix_fmt", "yuv420p",
+        "-threads", "0",
         "-y",
         output_path
     ]
@@ -341,8 +343,10 @@ shutil.move(video_to_move, new_video_path)
 
 print(f"\n✅ Final usable video path: {new_video_path}")
 
+fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"{bottom_text_my.strip()}_EMPTY.srt"))
+with open(fixed_srt_path, 'w', encoding='utf-8') as f:
+    f.write("")
 
-fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"{bottom_text_my.strip()}_fixed.srt"))
 print(f"\n📄 Copied EMPTY SRT to: {fixed_srt_path}")
 
 #print("📝 Opening subtitle file for manual editing...")
