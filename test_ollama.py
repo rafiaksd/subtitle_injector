@@ -8,11 +8,12 @@ def read_text_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as file:
         return file.read()
 
-def write_srt_file(filepath, text):
-    if not filepath.endswith('.srt'):
-        raise ValueError("File must have a .srt extension.")
-    
+def reset_a_file(filepath):    
     with open(filepath, 'w', encoding='utf-8') as file:
+        file.write("")
+
+def write_to_file(filepath, text):    
+    with open(filepath, 'a', encoding='utf-8') as file:
         file.write(text)
 
 def get_time_lapsed(start_time, emojis="⏰⏱️"):
@@ -54,14 +55,60 @@ JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE:
     except Exception as e:
         print(f"Error: {e}")
 
-arabic_sub_text = read_text_file("OUTPUT_TEST_example_sub.srt")
+#arabic_texts = ["super_short_sub.srt", "short_sub.srt", "medium_long_sub.srt", "very_long_sub.srt"]
+#models = ['gemma3:1b', 'gemma3:4b', 'gemma3n:e4b', 'gemma3:12b', 'gpt-oss:20b']
+arabic_texts = ["super_short_sub.srt", "short_sub.srt"]
+models = ['qwen3:0.6b', 'gemma3:1b']
 
-model = 'qwen3:1.7b'  
-generation_start_time = time.time()
+very_start_time = time.time()
 
-print(f"🧠🧠 Selected {model}")
-print("\n🏁🏁 Generation started\n")
-generate_response(model, arabic_sub_text)
-get_time_lapsed(generation_start_time)
+file_to_write_result = "model_test_results.txt"
+reset_a_file(file_to_write_result)
 
-winsound.Beep(1000,500)
+# Store timings
+results_table = {model: {} for model in models}
+
+for model in models:
+     sub_text_counter = 1
+     for arabic_sub_text in arabic_texts:
+          generation_start_time = time.time()
+
+          print(f"📙📘 SUB {sub_text_counter} - {arabic_sub_text}")
+          print(f"🧠🧠 Selected {model}")
+          print("\n🏁🏁 Generation started\n")
+
+          got_response = generate_response(model, read_text_file(arabic_sub_text))
+          time_taken = get_time_lapsed(generation_start_time)
+
+          results_table[model][arabic_sub_text] = time_taken
+
+          write_to_file(file_to_write_result, f"🧠🧠 Selected {model}\n\n" + got_response + "\n\n" + f"SUB {sub_text_counter} - {arabic_sub_text} - 🧠 {model}: ⏱️⏱️ Time: {str(time_taken)} seconds\n\n🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁\n\n")
+
+          print(f"📙📘 SUB {sub_text_counter} - {arabic_sub_text} - 🧠 {model} : ⏱️⏱️ Time: {str(time_taken)} seconds\n\n🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁🏁")
+          print('\n\n')
+
+          sub_text_counter += 1
+     
+     winsound.Beep(1000,500)
+
+write_to_file(file_to_write_result, "\n\n📊📊📊 Summary of Time Taken (in seconds):\n\n")
+
+# Header
+header_row = "Model".ljust(20)
+for text_name in arabic_texts:
+    header_row += text_name.ljust(25)
+write_to_file(file_to_write_result, header_row + "\n")
+print(file_to_write_result, header_row)
+
+# Rows
+for model in models:
+    row = model.ljust(20)
+    for text_name in arabic_texts:
+        time_taken = results_table[model].get(text_name, "-")
+        row += str(round(time_taken, 2)).ljust(25)
+    write_to_file(file_to_write_result, row + "\n")
+    print(file_to_write_result, row)
+
+winsound.PlaySound("success.wav", winsound.SND_FILENAME)
+
+get_time_lapsed(very_start_time)
