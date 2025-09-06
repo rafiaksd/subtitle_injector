@@ -55,10 +55,10 @@ JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE:
     except Exception as e:
         print(f"Error: {e}")
 
-#arabic_texts = ["super_short_sub.srt", "short_sub.srt", "medium_long_sub.srt", "very_long_sub.srt"]
-#models = ['gemma3:1b', 'gemma3:4b', 'gemma3n:e4b', 'gemma3:12b', 'gpt-oss:20b']
-arabic_texts = ["super_short_sub.srt", "short_sub.srt"]
-models = ['qwen3:0.6b', 'gemma3:1b']
+arabic_texts = ["short_sub.srt", "medium_long_sub.srt", "very_long_sub.srt"]
+models = ['llama3.2:3b', 'llama3.1:8b', 'gpt-oss:20b']
+#arabic_texts = ["super_short_sub.srt", "short_sub.srt"]
+#models = ['qwen3:0.6b', 'gemma3:1b']
 
 very_start_time = time.time()
 
@@ -98,7 +98,7 @@ header_row = "Model".ljust(20)
 for text_name in arabic_texts:
     header_row += text_name.ljust(25)
 write_to_file(file_to_write_result, header_row + "\n")
-print(file_to_write_result, header_row)
+print(header_row)
 
 # Rows
 for model in models:
@@ -107,8 +107,19 @@ for model in models:
         time_taken = results_table[model].get(text_name, "-")
         row += str(round(time_taken, 2)).ljust(25)
     write_to_file(file_to_write_result, row + "\n")
-    print(file_to_write_result, row)
+    print(row)
+
+print()
 
 winsound.PlaySound("success.wav", winsound.SND_FILENAME)
-
 get_time_lapsed(very_start_time)
+
+"""
+gemma3:1b	super_short_sub.srt	     17.76 seconds
+gemma3:1b	short_sub.srt	          30.07 seconds
+gemma3:1b	medium_long_sub.srt	     29.66 seconds
+gemma3:1b	very_long_sub.srt	     44.69 seconds
+gemma3:4b	super_short_sub.srt	     49.69 seconds
+gemma3:4b	short_sub.srt	          114.8 seconds
+gemma3:4b	medium_long_sub.srt	     241.93 seconds
+"""
