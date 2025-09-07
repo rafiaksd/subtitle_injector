@@ -56,7 +56,7 @@ JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE:
         print(f"Error: {e}")
 
 arabic_texts = ["short_sub.srt", "medium_long_sub.srt", "very_long_sub.srt"]
-models = ['llama3.2:3b', 'llama3.1:8b', 'gpt-oss:20b']
+models = ['gpt-oss:20b']
 #arabic_texts = ["super_short_sub.srt", "short_sub.srt"]
 #models = ['qwen3:0.6b', 'gemma3:1b']
 
@@ -70,6 +70,7 @@ results_table = {model: {} for model in models}
 
 for model in models:
      sub_text_counter = 1
+
      for arabic_sub_text in arabic_texts:
           generation_start_time = time.time()
 

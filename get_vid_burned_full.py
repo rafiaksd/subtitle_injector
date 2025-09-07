@@ -273,7 +273,7 @@ original_srt_path = output_sub_file
 import pysrt
 from wtpsplit import SaT
 
-MAX_DURATION_SECONDS = 10.0
+MAX_DURATION_SECONDS = 16.0
 THRESHOLD = 0.25
 
 def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=THRESHOLD):

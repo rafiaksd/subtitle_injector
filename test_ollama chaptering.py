@@ -54,8 +54,12 @@ def generate_response(model_name: str, arabic_subtitle: str):
     sub_end_time = get_srt_end_time(arabic_subtitle)
     print(f"⏱️🏁 DURATION: {sub_end_time}")
 
-    old_prompt = f"""
+    prompt = f"""
 Analyze the arabic transcript and identify the main topics or "chapters". For each topic, provide a clear, concise title in simple English, avoiding technical jargon or complex terms. Each topic length be between 3 - 8 mins, not more, not less.
+
+Hard rules: 
+- DO NOT generate any timestamp beyond {sub_end_time}
+- Avoid generic or vague topicization like "Introduction", "Overview", "Closing", etc.
 
 Format the output as a single array, where each element is a sub-array containing the topic title, the start time, and the end time in HH:MM:SS format.
 
@@ -68,7 +72,7 @@ Arabic Transcript to Analyze:
 {arabic_subtitle}
 """
     
-    prompt = f"""
+    old_prompt = f"""
 You are an expert in transcript topic segmentation
 
 I will give you an Arabic lecture transcript in SRT format. 
@@ -118,7 +122,7 @@ OUTPUT:
 
 arabic_texts = ['test_sub_short.srt', "extremely_long_sub_two.srt"]
 
-models = ['llama3.1:8b', 'gemma3:4b', 'gemma3:12b', 'gemma3n:e4b', 'gpt-oss:20b']
+models = ['deepseek-r1:8b' ,'qwen3:8b', 'gemma3:12b', 'gemma3n:e4b', 'gpt-oss:20b', 'llama3.1:8b']
 #arabic_texts = ["super_short_sub.srt", "short_sub.srt"]
 #models = ['qwen3:0.6b', 'gemma3:1b']
 
