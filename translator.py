@@ -1,5 +1,5 @@
 import ollama
-import time
+import time, tqdm, winsound
 
 def get_time_lapsed(start_time, emojis="⏰⏱️"):
     now_time = time.time()
@@ -32,7 +32,7 @@ def srt_to_lines(srt_text):
 def translate_line_with_context(model_name, current_line, context_lines):
     # Build prompt with context
     context_prompt = "Previous subtitle lines (context):\n"
-    for i, ctx in enumerate(context_lines[-5:], 1):  # Use last 5 lines only
+    for i, ctx in enumerate(context_lines[-5:], 1):  # Use last 3 lines only
         context_prompt += f"{i}. {ctx}\n"
 
     prompt = (
@@ -49,6 +49,29 @@ def translate_line_with_context(model_name, current_line, context_lines):
         print(f"Translation error: {e}")
         return "[TRANSLATION_FAILED]"
 
+def generate_english_srt(original_srt_path, translated_lines, output_path="sharaf_SUB_translated_en.srt"):
+    srt_content = read_text_file(original_srt_path)
+    blocks = srt_content.strip().split("\n\n")
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        for i, block in enumerate(blocks):
+            lines = block.strip().splitlines()
+
+            # Skip blocks that don't look valid
+            if len(lines) < 3:
+                continue
+
+            index = lines[0]
+            timestamp = lines[1]
+            # Replace text lines with English translation if available
+            translated = translated_lines[i] if i < len(translated_lines) else "[UNTRANSLATED]"
+
+            f.write(f"{index}\n")
+            f.write(f"{timestamp}\n")
+            f.write(f"{translated}\n\n")
+
+    print(f"✅ English .srt saved as: {output_path}")
+
 ar_file = "translated_lines.txt"
 
 def main(model:str = "gemma3:4b"):
@@ -63,12 +86,16 @@ def main(model:str = "gemma3:4b"):
 
     print(f"Found {len(arabic_lines)} subtitle lines.")
     aligned = []
+    translated_lines = []
 
-    for i, current_line in enumerate(arabic_lines):
-        context = arabic_lines[max(0, i - 5):i]  # previous 5 lines
-        print(f"\nTranslating line {i+1}/{len(arabic_lines)}...")
+    for i in tqdm.tqdm(range(len(arabic_lines)), desc="Translating lines", unit="line"):
+        current_line = arabic_lines[i]
+        context = arabic_lines[max(0, i - 5):i]  # previous 3 lines
+
         english = translate_line_with_context(model_name, current_line, context)
         aligned.append((current_line, english))
+        translated_lines.append(english)
+
         ar_line = f"[AR] {current_line}"
         en_line = f"[EN] {english}"
 
@@ -78,10 +105,15 @@ def main(model:str = "gemma3:4b"):
             f.write(en_line + "\n\n")
 
     print(f"\n✅ Saved translated lines to {output_path}")
+    return translated_lines
 
 start_time = time.time()
 clear_text_file(ar_file)
 
-main("gemma3:12b")
+translated_lines = main("gemma3:4b")
+
+generate_english_srt("sharaf_SUB_sentenced.srt", translated_lines)
 
 get_time_lapsed(start_time)
+
+winsound.PlaySound("victory.wav", winsound.SND_FILENAME)
