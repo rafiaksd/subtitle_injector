@@ -1,63 +1,19 @@
-from faster_whisper import WhisperModel
-import os, time, winsound
-import srt
-import datetime
+
+import pysrt, time
+from wtpsplit import SaT
+
+very_start = time.time()
 
 def get_time_lapsed(start_time, emojis="⏰⏱️"):
     now_time = time.time()
     time_elapse = now_time - start_time
     print(f"{emojis}   Time elapsed: {time_elapse:.2f} seconds\n")
-    return round(time_elapse, 2)
 
-model_size = "tiny"
 
-# Load Whisper model (e.g., "large-v3" or "turbo")
-model = WhisperModel(model_size, device="cpu", compute_type="int8")
+MAX_DURATION_SECONDS = 12
+THRESHOLD = 0.2
 
-input_file = "full_videos/22 book summaries.mp4"
-input_file_name = input_file.split(".")[0]
-
-print("Started WORD LEVEL Transcribing...")
-word_start = time.time()
-
-segments, info = model.transcribe(
-    input_file, 
-    word_timestamps=True,
-    beam_size=5,
-    vad_filter=True
-)
-
-# Collect words with timestamps
-words_with_timestamps = []
-for segment in segments:
-    for word in segment.words:
-        words_with_timestamps.append(word)
-get_time_lapsed(word_start, "🔤")
-
-# Convert each word into a separate .srt entry
-subtitle_entries = []
-for i, word in enumerate(words_with_timestamps):
-    start = datetime.timedelta(seconds=word.start)
-    end = datetime.timedelta(seconds=word.end)
-    text = word.word.strip()
-    if not text:
-        continue
-    subtitle_entries.append(srt.Subtitle(index=i + 1, start=start, end=end, content=text))
-
-# Save to .srt file
-output_sub_file = input_file_name + ".srt"
-with open(output_sub_file, "w", encoding="utf-8") as f:
-    f.write(srt.compose(subtitle_entries))
-
-print(f"Word-level subtitles saved to {output_sub_file}")
-winsound.Beep(1000, 500)
-
-import pysrt
-from wtpsplit import SaT
-
-MAX_DURATION_SECONDS = 8.0
-
-def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path="sentence_level_max_time.srt", threshold=0.05):
+def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path):
     # Step 1: Load word-level SRT
     subs = pysrt.open(input_srt_path, encoding="utf-8")
 
@@ -72,7 +28,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path="sentence_l
 
     # Step 3: Sentence segmentation
     sat = SaT("sat-12l-sm", language="ar", style_or_domain="general")
-    sentences = sat.split(full_text, threshold=threshold)
+    sentences = sat.split(full_text, threshold=THRESHOLD)
 
     sentence_subs = []
     for sentence in sentences:
@@ -90,6 +46,10 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path="sentence_l
 
         if first_word_idx is not None and last_word_idx is not None:
             word_indices = list(range(first_word_idx, last_word_idx + 1))
+            if not word_indices:
+                print(f"⚠️ Skipping empty range for sentence: \"{sentence.strip()}\"")
+                continue
+
             current_chunk = []
             chunk_start_idx = word_indices[0]
             chunk_start_time = subs[chunk_start_idx].start
@@ -133,7 +93,6 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path="sentence_l
     new_srt.save(output_srt_path, encoding="utf-8")
     print(f"✅ Saved sentence-level SRT to: {output_srt_path}")
 
-print("Started SENTENCE SUBBING...")
-final_sub_file = input_file_name + "_sentenced.srt"
-generate_sentence_srt_with_pysrt(input_srt_path=output_sub_file, output_srt_path=final_sub_file)
-get_time_lapsed(word_start, "🏁🏁")
+generate_sentence_srt_with_pysrt("high degree of worship to allah.srt", "hok.srt")
+
+get_time_lapsed(very_start)
