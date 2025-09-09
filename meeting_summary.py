@@ -23,8 +23,30 @@ def get_time_lapsed(start_time, emojis="⏰⏱️"):
     return round(time_elapse, 2)
 
 def generate_summary(model_name: str, transcript: str):
+    prompt = f"""
+     You are a hyper-detailed meeting analyst with a photographic memory and extreme attention to detail.
+
+     You are tasked with generating a **VERY LONG, SUPER DETAILED, COMPREHENSIVE, AND EXHAUSTIVE SUMMARY** of the following meeting transcript.
+
+     ⚠️ **IMPORTANT INSTRUCTIONS — FOLLOW EXACTLY:**
+
+     - Go through the transcript **line by line**, and **extract every single distinct point** that was mentioned — **DO NOT SKIP ANYTHING**, no matter how minor it may seem.
+     - **DO NOT MERGE** or compress points. Treat **each unique thought, idea, suggestion, question, answer, action item, or issue raised** as a **separate bullet point**.
+     - Include **all important and seemingly unimportant details** — even small clarifications, disagreements, follow-ups, and tangents.
+     - If a topic is **revisited later**, capture that **as a new entry** with reference to the earlier discussion if needed.
+
+     🧠 **FORMAT INSTRUCTIONS:**
+     - Use **bullet points**, or **numbered sections grouped by topic**, or **speaker-based sections** if that improves clarity.
+     - Use **clear, full sentences**.
+     - The summary should be **long and highly detailed** — prioritize **completeness over brevity**.
+     - Your goal is to give the reader the ability to understand **everything that was discussed**, as if they had been in the meeting themselves.
+     - **DO NOT OMIT OR SUMMARIZE** — write out all points explicitly, no matter how repetitive or small.
+
+     🔽 BEGIN TRANSCRIPT 🔽
+     {transcript}
+     🔼 END TRANSCRIPT 🔼
+     """
     
-    prompt = f"summarize this meeting transcript, note about every distinct points/matters, let no distinct points be overlooked \n\n {transcript}"
     try:
         response = ollama.generate(model=model_name, prompt=prompt)
         
@@ -40,13 +62,14 @@ def generate_summary(model_name: str, transcript: str):
         print(f"Error: {e}")
 
 meeting_texts = ["ai_meeting_sub.txt"]
-models = ['qwen3:1.7b', 'gemma3:4b', 'qwen3:4b', 'qwen3:8b', 'gemma3:12b']
+models = ['gemma3:4b', 'qwen3:4b', 'llama3.1:8b', 'qwen3:8b', 'gemma3n:e4b', 'gemma3:12b', 'qwen3:14b']
+
 #arabic_texts = ["super_short_sub.srt", "short_sub.srt"]
 #models = ['qwen3:0.6b', 'gemma3:1b']
 
 very_start_time = time.time()
 
-file_to_write_result = "summary_test_results.txt"
+file_to_write_result = "meeting_summary_test_results.txt"
 reset_a_file(file_to_write_result)
 
 # Store timings
@@ -98,13 +121,3 @@ print()
 
 winsound.PlaySound("success.wav", winsound.SND_FILENAME)
 get_time_lapsed(very_start_time)
-
-"""
-gemma3:1b	super_short_sub.srt	     17.76 seconds
-gemma3:1b	short_sub.srt	          30.07 seconds
-gemma3:1b	medium_long_sub.srt	     29.66 seconds
-gemma3:1b	very_long_sub.srt	     44.69 seconds
-gemma3:4b	super_short_sub.srt	     49.69 seconds
-gemma3:4b	short_sub.srt	          114.8 seconds
-gemma3:4b	medium_long_sub.srt	     241.93 seconds
-"""

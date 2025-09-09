@@ -63,7 +63,7 @@ def translate_line_with_context(model_name, current_line, context_lines):
         print(f"Translation error: {e}")
         return "[TRANSLATION_FAILED]"
 
-def generate_english_srt(original_srt_path, translated_lines, output_path="sharaf_SUB_translated_en.srt"):
+def generate_english_srt(original_srt_path, translated_lines, output_path):
     srt_content = read_text_file(original_srt_path)
     blocks = srt_content.strip().split("\n\n")
 
@@ -87,9 +87,8 @@ def generate_english_srt(original_srt_path, translated_lines, output_path="shara
     print(f"✅ English .srt saved as: {output_path}")
 
 ar_file = "translated_lines.txt"
-filepath = "sharaf_SUB_sentenced.srt"
 
-def main(model):
+def translator_main(model, filepath):
     model_name = model  # make sure this model exists locally via `ollama list`
     print(f" 🧠Using {model_name}")
 
@@ -120,13 +119,14 @@ def main(model):
     print(f"\n✅ Saved translated lines to {output_path}")
     return translated_lines
 
-start_time = time.time()
+translation_start_time = time.time()
 clear_text_file(ar_file)
 
-translated_lines = main("qwen3:8b")
+arabic_sub_to_translate = "sharaf_SUB_sentenced.srt" ########
+translated_eng_sub = arabic_sub_to_translate.split(".")[0] + "_eng.srt" ##########
 
-generate_english_srt("sharaf_SUB_sentenced.srt", translated_lines)
+translated_lines = translator_main("phi4-mini:3.8b", arabic_sub_to_translate)
+generate_english_srt("sharaf_SUB_sentenced.srt", translated_lines, translated_eng_sub)
 
-get_time_lapsed(start_time)
-
+get_time_lapsed(translation_start_time)
 winsound.PlaySound("victory.wav", winsound.SND_FILENAME)
