@@ -32,19 +32,33 @@ def srt_to_lines(srt_text):
 def translate_line_with_context(model_name, current_line, context_lines):
     # Build prompt with context
     context_prompt = "Previous subtitle lines (context):\n"
-    for i, ctx in enumerate(context_lines[-5:], 1):  # Use last 3 lines only
+    for i, ctx in enumerate(context_lines[-3:], 1):  # Use last 3 lines only
         context_prompt += f"{i}. {ctx}\n"
 
     prompt = (
         f"{context_prompt}\n"
         f"Now, based on this context, translate ONLY the following line to English:\n"
         f"\"{current_line}\"\n\n"
-        f"Use simple English. Only return the translated English sentence. No explanation."
+        f"For God use word \"Allah\". Use simple English. Only return the translated English sentence. No explanation."
     )
+
+    if "qwen" in model_name.lower():
+        prompt += " /no_think"
+        #print(f"😱😱 QWEN MODEL!")
+        #print(f"PROMPT:\n{prompt}")
 
     try:
         response = ollama.generate(model=model_name, prompt=prompt)
-        return response['response'].strip()
+        response = response['response'].strip()
+
+        #if QWEN model, response has THINKING <think> </think>, so remove
+        if "<think>" in response:
+          response = response.split("<think>")[1]
+          response = response.split("</think>")[1].strip()
+
+        print(f"\nRESPONSE: {response}")
+
+        return response
     except Exception as e:
         print(f"Translation error: {e}")
         return "[TRANSLATION_FAILED]"
@@ -73,12 +87,11 @@ def generate_english_srt(original_srt_path, translated_lines, output_path="shara
     print(f"✅ English .srt saved as: {output_path}")
 
 ar_file = "translated_lines.txt"
+filepath = "sharaf_SUB_sentenced.srt"
 
-def main(model:str = "gemma3:4b"):
+def main(model):
     model_name = model  # make sure this model exists locally via `ollama list`
     print(f" 🧠Using {model_name}")
-
-    filepath = "sharaf_SUB_sentenced.srt"
 
     print(f"Reading subtitle file: {filepath}")
     arabic_text = read_text_file(filepath)
@@ -90,7 +103,7 @@ def main(model:str = "gemma3:4b"):
 
     for i in tqdm.tqdm(range(len(arabic_lines)), desc="Translating lines", unit="line"):
         current_line = arabic_lines[i]
-        context = arabic_lines[max(0, i - 5):i]  # previous 3 lines
+        context = arabic_lines[max(0, i - 3):i]  # previous 3 lines
 
         english = translate_line_with_context(model_name, current_line, context)
         aligned.append((current_line, english))
@@ -110,7 +123,7 @@ def main(model:str = "gemma3:4b"):
 start_time = time.time()
 clear_text_file(ar_file)
 
-translated_lines = main("gemma3:4b")
+translated_lines = main("qwen3:8b")
 
 generate_english_srt("sharaf_SUB_sentenced.srt", translated_lines)
 
