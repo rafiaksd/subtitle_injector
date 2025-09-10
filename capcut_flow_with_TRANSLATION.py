@@ -431,6 +431,10 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
                         if not is_last_word:
                             chunk_start_time = subs[i + 1].start
 
+    # Fix end times to match next subtitle's start time
+    for i in range(len(sentence_subs) - 1):
+        sentence_subs[i].end = sentence_subs[i + 1].start
+
     # Save final SRT
     new_srt = pysrt.SubRipFile(items=sentence_subs)
     new_srt.save(output_srt_path, encoding="utf-8")
@@ -577,7 +581,7 @@ clear_text_file(ar_file)
 arabic_sub_to_translate = fixed_srt_path ########
 translated_eng_sub = arabic_sub_to_translate.split(".")[0] + "_eng.srt" ##########
 
-translated_lines = translator_main("gemma3:12b", arabic_sub_to_translate)
+translated_lines = translator_main("gemma3:4b", arabic_sub_to_translate)
 generate_english_srt(arabic_sub_to_translate, translated_lines, translated_eng_sub)
 
 get_time_lapsed(translation_start_time)
@@ -589,11 +593,11 @@ get_time_lapsed(translation_start_time)
 semantic_ar_sub_file = fixed_srt_path
 print("SELECTED SUB to COPY for FIXING...")
 
-fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"{bottom_text_my.strip()}_arabic.srt"))
+fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"AR_{bottom_text_my.strip()}.srt"))
 shutil.copyfile(semantic_ar_sub_file, fixed_srt_path)
 print(f"\n📄 Copied original SRT to: {fixed_srt_path}")
 
-fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"{bottom_text_my.strip()}.srt"))
+fixed_srt_path = os.path.abspath(os.path.join(destination_dir, f"ENG_{bottom_text_my.strip()}.srt"))
 shutil.copyfile(translated_eng_sub, fixed_srt_path)
 print(f"\n📄 Copied ENG SRT to: {fixed_srt_path}")
 

@@ -431,6 +431,10 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
                         if not is_last_word:
                             chunk_start_time = subs[i + 1].start
 
+    # Fix end times to match next subtitle's start time
+    for i in range(len(sentence_subs) - 1):
+        sentence_subs[i].end = sentence_subs[i + 1].start
+
     # Save final SRT
     new_srt = pysrt.SubRipFile(items=sentence_subs)
     new_srt.save(output_srt_path, encoding="utf-8")
