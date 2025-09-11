@@ -435,6 +435,23 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
     for i in range(len(sentence_subs) - 1):
         sentence_subs[i].end = sentence_subs[i + 1].start
 
+    # Merge subtitles shorter than MIN_DURATION_SECONDS with the previous one
+    MIN_DURATION_SECONDS = 3  # Minimum readable subtitle duration in seconds
+    i = 1  # Start from second subtitle
+    while i < len(sentence_subs):
+        duration = (sentence_subs[i].end.ordinal - sentence_subs[i].start.ordinal) / 1000.0
+        if duration < MIN_DURATION_SECONDS:
+            # Merge with previous
+            prev = sentence_subs[i - 1]
+            current = sentence_subs[i]
+
+            prev.text = prev.text.strip() + " " + current.text.strip()
+            prev.end = current.end
+
+            sentence_subs.pop(i)
+        else:
+            i += 1
+
     # Save final SRT
     new_srt = pysrt.SubRipFile(items=sentence_subs)
     new_srt.save(output_srt_path, encoding="utf-8")

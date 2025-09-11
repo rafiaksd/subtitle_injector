@@ -125,7 +125,7 @@ clear_text_file(ar_file)
 arabic_sub_to_translate = "sharaf_SUB_sentenced.srt" ########
 translated_eng_sub = arabic_sub_to_translate.split(".")[0] + "_eng.srt" ##########
 
-translated_lines = translator_main("phi4-mini:3.8b", arabic_sub_to_translate)
+translated_lines = translator_main("gemma3:1b", arabic_sub_to_translate)
 generate_english_srt("sharaf_SUB_sentenced.srt", translated_lines, translated_eng_sub)
 
 get_time_lapsed(translation_start_time)
