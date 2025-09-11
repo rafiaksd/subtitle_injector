@@ -434,6 +434,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
     # Fix end times to match next subtitle's start time
     for i in range(len(sentence_subs) - 1):
         sentence_subs[i].end = sentence_subs[i + 1].start
+    print(f"⏭️ Changed SUB end time = next subtitles start time")
 
     # Merge subtitles shorter than MIN_DURATION_SECONDS with the previous one
     MIN_DURATION_SECONDS = 3  # Minimum readable subtitle duration in seconds
@@ -451,6 +452,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
             sentence_subs.pop(i)
         else:
             i += 1
+    print(f"🤝🤝 Merged sub less than {MIN_DURATION_SECONDS} seconds with previous sub")
 
     # Save final SRT
     new_srt = pysrt.SubRipFile(items=sentence_subs)
