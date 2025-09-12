@@ -445,7 +445,7 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
             prev = sentence_subs[i - 1]
             current = sentence_subs[i]
 
-            prev.text = prev.text.strip() + " " + current.text.strip()
+            prev.text = prev.text.strip() + "... " + current.text.strip()
             prev.end = current.end
 
             sentence_subs.pop(i)
