@@ -80,12 +80,16 @@ def get_video_from_youtube():
             print("❌ No valid video streams found.")
             return None
 
-        index = int(input(f"Select quality (1-{len(available_streams)}): "))
-        if not (1 <= index <= len(available_streams)):
-            print("❌ Invalid selection.")
-            return None
+        print(f"🏃‍➡️👟 SKIPPING SELECT QUALITY, AUTO SELECTING")
+        #index = int(input(f"Select quality (1-{len(available_streams)}): "))
+        #if not (1 <= index <= len(available_streams)):
+            #print("❌ Invalid selection.")
+            #return None
 
-        selected_stream = available_streams[index - 1]
+        # Automatically select second-to-last resolution
+        auto_index = max(0, len(available_streams) - 2)
+        selected_stream = available_streams[auto_index]
+
         base_video_path = os.path.join(FULL_DIR, f"{title}_video.mp4")
         base_audio_path = os.path.join(FULL_DIR, f"{title}_audio.m4a")
         final_output = os.path.join(FULL_DIR, f"{title}.mp4")
