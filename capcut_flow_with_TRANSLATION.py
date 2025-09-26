@@ -74,7 +74,7 @@ def get_video_from_youtube():
                 seen_res.add(res)
                 available_streams.append(stream)
                 tag = "Progressive" if stream.is_progressive else "Video-only"
-                print(f"{len(available_streams)}. {res} ({tag})")
+                #print(f"{len(available_streams)}. {res} ({tag})")
 
         if not available_streams:
             print("❌ No valid video streams found.")
@@ -89,7 +89,7 @@ def get_video_from_youtube():
         # Automatically select second-to-last resolution
         auto_index = max(0, len(available_streams) - 2)
         selected_stream = available_streams[auto_index]
-        
+
         base_video_path = os.path.join(FULL_DIR, f"{title}_video.mp4")
         base_audio_path = os.path.join(FULL_DIR, f"{title}_audio.m4a")
         final_output = os.path.join(FULL_DIR, f"{title}.mp4")
@@ -210,10 +210,11 @@ def get_video_from_local():
     print(f"\n✅ LOCAL VIDEO FILE READY:\n{abs_path}")
     return abs_path
 
+bottom_text_my = input("Enter bottom title: ")
+
 print("Choose source:")
 print("1. YouTube")
 print("2. Local file")
-
 choice = input("Enter 1 or 2: ").strip()
 
 if choice == "1":
@@ -238,7 +239,7 @@ def get_caption_text():
 
 #title_text = input("Enter Scholar Name: ")
 #caption_text = get_caption_text()
-bottom_text_my = input("Enter bottom title: ")
+#bottom_text_my = input("Enter bottom title: ")
 
 destination_dir = os.path.join("capcut", sanitize_folder_name(bottom_text_my))
 os.makedirs(destination_dir, exist_ok=True)
@@ -624,6 +625,55 @@ print(f"\n📄 Copied ENG SRT to: {fixed_srt_path}")
 
 os.startfile(destination_dir)
 winsound.PlaySound("victory.wav", winsound.SND_FILENAME)
+
+##################################
+### COPYING TExT to CLIPBOARD ####
+##################################
+import pyperclip
+
+def read_srt_content(file_path: str) -> str:
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            srt_content = f.read()
+        print(f"✅ Successfully read content from: {file_path}")
+        return srt_content
+    except FileNotFoundError:
+        print(f"❌ Error: File not found at {file_path}")
+        return ""
+    except Exception as e:
+        print(f"❌ An error occurred while reading the file: {e}")
+        return ""
+
+
+prompt_text = """Translate every single subtitle into English. Use simple English.
+NO SUBTITLE SHOULD OVERLAP WITH ANOTHER SUBTITLE EVER!
+In the English translation:
+- Replace the word “God” with “Allah”.
+- Replace any instance of “peace be upon him” (referring to the Prophet) with “ﷺ”.
+- Replace May Allah be Pleased with him with رضي الله عنه
+- If there is a Quranic verse in the text, then it should be in quotes, and after the end of the quote, the surah name and verse number should be added, eg Yusuf 12
+
+The final result MUST be formatted in standard .srt subtitle format and only have the TRANSLATED ENGLISH PART.
+
+JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE"""
+    
+def combine_and_copy_to_clipboard(prompt: str, srt_content: str):
+    combined_text = prompt.strip() + "\n\n" + srt_content.strip()
+
+    if combined_text.strip(): # Only copy if there is content
+        try:
+            pyperclip.copy(combined_text)
+            print("\n✅ Combined text (Prompt + Subtitles) has been copied to your clipboard!")
+        except pyperclip.PyperclipException as e:
+            print(f"\n❌ Clipboard Error: Could not copy text. Is a clipboard tool installed/running? ({e})")
+        except Exception as e:
+            print(f"\n❌ An unexpected error occurred during copy: {e}")
+    else:
+        print("\n⚠️ No content to copy to clipboard (Check file path and content).")
+
+srt_content = read_srt_content(fixed_srt_path)
+combine_and_copy_to_clipboard(prompt_text, srt_content)
+
 
 ##################################
 ### NOW BURNING TEXT TO VIDEO
