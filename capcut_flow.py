@@ -525,8 +525,10 @@ def read_srt_content(file_path: str) -> str:
         print(f"❌ An error occurred while reading the file: {e}")
         return ""
 
-prompt_text = """Translate every single subtitle into English. Use simple English.
+prompt_text = """Translate every subtitle line into English using very simple English that even an 8-year-old can understand.
+
 NO SUBTITLE SHOULD OVERLAP WITH ANOTHER SUBTITLE EVER!
+
 In the English translation:
 - Replace the word “God” with “Allah”.
 - Replace any instance of “peace be upon him” (referring to the Prophet) with “ﷺ”.
@@ -537,7 +539,8 @@ The final result MUST be formatted in standard .srt subtitle format and only hav
 
 JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE
 
-ARABIC SUBTITLES TO TRANSLATE: """
+ARABIC SUBTITLES TO TRANSLATE: 
+"""
     
 def combine_and_copy_to_clipboard(prompt: str, srt_content: str):
     combined_text = prompt.strip() + "\n\n" + srt_content.strip()
