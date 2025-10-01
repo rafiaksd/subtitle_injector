@@ -123,6 +123,7 @@ def get_video_from_youtube():
         final_output = os.path.abspath(final_output)
 
         winsound.Beep(1000,500)
+        winsound.PlaySound("want_trim.wav", winsound.SND_FILENAME)
         trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
         if trim == "yes":
             start = input("⏱️ Start time (e.g. 00:00:05): ").strip()
@@ -534,7 +535,9 @@ In the English translation:
 
 The final result MUST be formatted in standard .srt subtitle format and only have the TRANSLATED ENGLISH PART.
 
-JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE"""
+JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE
+
+ARABIC SUBTITLES TO TRANSLATE: """
     
 def combine_and_copy_to_clipboard(prompt: str, srt_content: str):
     combined_text = prompt.strip() + "\n\n" + srt_content.strip()
