@@ -123,6 +123,8 @@ def get_video_from_youtube():
         final_output = os.path.abspath(final_output)
 
         winsound.Beep(1000,500)
+        winsound.PlaySound("want_trim.wav", winsound.SND_FILENAME)
+
         trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
         if trim == "yes":
             start = input("⏱️ Start time (e.g. 00:00:05): ").strip()

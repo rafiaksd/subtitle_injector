@@ -525,7 +525,7 @@ def read_srt_content(file_path: str) -> str:
         print(f"❌ An error occurred while reading the file: {e}")
         return ""
 
-prompt_text = """Translate every subtitle line into English using very simple English that even an 8-year-old can understand.
+prompt_text = """Translate every subtitle line into English using simple English.
 
 NO SUBTITLE SHOULD OVERLAP WITH ANOTHER SUBTITLE EVER!
 
