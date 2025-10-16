@@ -398,9 +398,15 @@ def generate_sentence_srt_with_pysrt(input_srt_path, output_srt_path, threshold=
             if e <= sent_end:
                 last_word_idx = i
 
+        if first_word_idx is None or last_word_idx is None:
+            print(f"⚠️ Could not map sentence to word spans: '{sentence}'")
+            continue
         if first_word_idx is not None and last_word_idx is not None:
             word_indices = list(range(first_word_idx, last_word_idx + 1))
             current_chunk = []
+            if not word_indices:
+                print(f"⚠️ Warning: Empty word_indices for sentence: '{sentence}'")
+                continue
             chunk_start_idx = word_indices[0]
             chunk_start_time = subs[chunk_start_idx].start
 
@@ -540,7 +546,7 @@ def translate_line_with_context(model_name, current_line, context_lines):
 
         return response
     except Exception as e:
-        print(f"Translation error: {e}")
+        print(f"❌🎌❌ Translation error: {e}")
         return "[TRANSLATION_FAILED]"
 
 def generate_english_srt(original_srt_path, translated_lines, output_path):
