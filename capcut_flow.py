@@ -535,7 +535,22 @@ def read_srt_content(file_path: str) -> str:
         print(f"❌ An error occurred while reading the file: {e}")
         return ""
 
-prompt_text = """summarize all distinct points in simple english, let no distinct point be left
+prompt_text = """Translate every subtitle line into English using simple English.
+
+NO SUBTITLE SHOULD OVERLAP WITH ANOTHER SUBTITLE EVER!
+
+In the English translation:
+- TIMESTAMP BE EXACT SAME NO CHANGES
+- Replace the word “God” with “Allah”.
+- Replace any instance of “peace be upon him” (referring to the Prophet) with “ﷺ”.
+- Replace May Allah be Pleased with him with رضي الله عنه
+- If there is a Quranic verse in the text, then it should be in quotes, and after the end of the quote, the surah name and verse number should be added, eg Yusuf 12
+
+The final result MUST be formatted in standard .srt subtitle format and only have the TRANSLATED ENGLISH PART. The final subtitles must have exact time stamps as original.
+
+JUST PROVIDE THE TRANSLATED ENGLISH SUBTITLE PART, NOTHING ELSE
+
+ARABIC SUBTITLES TO TRANSLATE: 
 
 """
     
