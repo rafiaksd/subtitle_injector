@@ -124,7 +124,7 @@ def get_video_from_youtube():
                 "-c:v", "copy", "-c:a", "copy",
                 "-y", trimmed_path
             ], check=True,capture_output=True, text=True, encoding='utf-8')
-
+            
             #delete_full_video = input("👀👀 Do you want to DELETE the FULL video? (yes/no): ").strip().lower()
             delete_full_video = "yes"
             if delete_full_video == "yes":
