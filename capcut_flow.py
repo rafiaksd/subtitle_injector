@@ -25,6 +25,11 @@ CLIP_DIR = os.path.abspath("clips")
 os.makedirs(FULL_DIR, exist_ok=True)
 os.makedirs(CLIP_DIR, exist_ok=True)
 
+trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
+if trim=="yes":
+    start = input("⏱️ Start time (e.g. 00:00:05): ").strip()
+    end = input("⏱️ End time (e.g. 00:01:00): ").strip()
+
 def get_time_lapsed(start_time, emojis="⏰⏱️"):
     now_time = time.time()
     time_elapse = now_time - start_time
@@ -51,7 +56,6 @@ def sanitize_folder_name(name: str, replacement: str = "_") -> str:
 
     return sanitized
 
-# https://www.youtube.com/watch?v=BZP1rYjoBgI the 30 second video 
 def get_video_from_youtube():
     link = input("Enter the YouTube video URL: ").strip()
     if not link:
@@ -124,11 +128,8 @@ def get_video_from_youtube():
 
         winsound.Beep(1000,500)
         winsound.PlaySound("want_trim.wav", winsound.SND_FILENAME)
-        trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
+        
         if trim == "yes":
-            start = input("⏱️ Start time (e.g. 00:00:05): ").strip()
-            end = input("⏱️ End time (e.g. 00:01:00): ").strip()
-
             # Make times filename-safe
             start_safe = start.replace(":", "_")
             end_safe = end.replace(":", "_")
@@ -180,11 +181,7 @@ def get_video_from_local():
     base_name = os.path.basename(abs_path)
     base_name_no_ext = os.path.splitext(base_name)[0]
 
-    trim = input("✂️ Do you want to trim the video? (yes/no): ").strip().lower()
     if trim == "yes":
-        start = input("⏱️ Start time (e.g. 00:00:05): ").strip()
-        end = input("⏱️ End time (e.g. 00:01:00): ").strip()
-
         # Clean timestamps for filename
         start_safe = start.replace(":", "-")
         end_safe = end.replace(":", "-")
@@ -210,6 +207,7 @@ def get_video_from_local():
 
     print(f"\n✅ LOCAL VIDEO FILE READY:\n{abs_path}")
     return abs_path
+
 
 bottom_text_my = input("Enter bottom title: ")
 
